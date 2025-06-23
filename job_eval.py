@@ -1,4 +1,3 @@
-import json
 import asyncio
 from datetime import date
 from pydantic import BaseModel
@@ -10,7 +9,7 @@ from utils import remove_json_fences
 
 class Evaluator(BaseModel):
     name: str = "eval"
-    instruction: str = f"""你是一位非常专业的职业导师，请根据以下标准评判岗位是否对求职者来说是一份优质工作:
+    instruction: str = """你是一位非常专业的职业导师，请根据以下标准评判岗位是否对求职者来说是一份优质工作:
 
 1. 技能匹配度: 岗位要求的技术或经验与求职者简历中的技能是否高度匹配？
 2. 工作内容与职业目标契合度: 岗位的工作职责是否符合求职者的职业发展方向？求职者是否对该职位的工作内容感兴趣，并愿意在此领域深耕？

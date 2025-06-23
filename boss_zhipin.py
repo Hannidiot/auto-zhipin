@@ -2,9 +2,9 @@ import json
 import random
 from pathlib import Path
 from urllib.parse import urlencode, quote
-from typing import Annotated, AsyncGenerator
+from typing import AsyncGenerator
 from playwright.async_api import BrowserContext, Page, Locator, async_playwright, expect
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 base_url = "https://www.zhipin.com"
