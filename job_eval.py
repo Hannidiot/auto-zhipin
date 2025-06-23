@@ -1,4 +1,3 @@
-import re
 import json
 import asyncio
 from datetime import date
@@ -6,21 +5,19 @@ from pydantic import BaseModel
 from typing import Callable, Awaitable
 from mcp_agent.core.fastagent import FastAgent
 from mcp_agent.core.request_params import RequestParams
-
-
-def remove_json_fences(raw: str):
-    return re.sub(r"`{3}(json)?\n?", "", raw)
+from utils import remove_json_fences
 
 
 class Evaluator(BaseModel):
     name: str = "eval"
-    instruction: str = f"""你是一位非常专业的职业导师，请根据以下标准评判工作岗位与求职者的匹配程度:
+    instruction: str = f"""你是一位非常专业的职业导师，请根据以下标准评判岗位是否对求职者来说是一份优质工作:
 
-1. 教育背景: 求职者的学历与岗位要求是否一致？与岗位相关的专业背景或学位是否符合？
-2. 工作经验: 求职者的工作经历是否与岗位要求的工作年限、工作领域相关？求职者是否有类似行业或领域的工作经验？
-3. 技能要求: 简历中列出的技能是否符合岗位要求的技术栈、工具、语言等？求职者是否具备额外的技能，可能对岗位有所加分？
-4. 成就与业绩: 求职者是否在简历中列出了与岗位相关的成果或项目经验？求职者是否有量化的业绩数据来支持其能力？
-5. 文化适配: 求职者是否在简历中表现出与公司文化或团队环境相符的特点？求职者是否有跨文化沟通或适应不同工作环境的经验？
+1. 技能匹配度: 岗位要求的技术或经验与求职者简历中的技能是否高度匹配？
+2. 工作内容与职业目标契合度: 岗位的工作职责是否符合求职者的职业发展方向？求职者是否对该职位的工作内容感兴趣，并愿意在此领域深耕？
+3. 薪资福利匹配: 岗位提供的薪资是否符合求职者的预期或市场标准？是否有良好的福利待遇，如医疗、年假、员工培训等？
+4. 职业成长空间: 该岗位是否提供了职业晋升的机会或职业发展的空间？是否有相关的培训资源或发展支持？
+5. 公司文化与工作环境: 公司文化是否符合求职者的价值观和工作风格？求职者是否能够融入公司环境？
+6. 工作与生活平衡: 岗位是否提供足够的工作与生活平衡，避免过度加班或高压环境？求职者是否可以在该岗位上保持健康的工作节奏？
 
 请针对每项标准提供评级 (EXCELLENT, GOOD, FAIR, or POOR)。"""
 
@@ -39,12 +36,12 @@ class Evaluator(BaseModel):
 {job_description}
 </job-description>
 
-今天是{today}，请评判该岗位与求职者的匹配程度。"""
+今天是{today}，请评判该岗位是否对求职者来说是一份优质工作。"""
 
 
 class EvalSummary(BaseModel):
     name: str = "eval_summary"
-    instruction: str = """Summarize the evaluation as a structured response with the overall match rating.
+    instruction: str = """Summarize the evaluation as a structured response with the overall rating.
 
 Your response MUST be valid JSON matching this exact format (no other text, markdown, or explanation):
 
@@ -53,10 +50,10 @@ Your response MUST be valid JSON matching this exact format (no other text, mark
 Where:
 
 - RATING: Must be one of: "EXCELLENT", "GOOD", "FAIR", or "POOR"
-- EXCELLENT: Perfect match
-- GOOD: General match
-- FAIR: General mismatch
-- POOR: Complete mismatch
+- EXCELLENT: It's a perfect job
+- GOOD: This job is just OK
+- FAIR: This job doesn't look good
+- POOR: This job is complete shit
 
 IMPORTANT: Your response should be ONLY the JSON object without any code fences, explanations, or other text."""
     use_history: bool = False
@@ -70,6 +67,19 @@ IMPORTANT: Your response should be ONLY the JSON object without any code fences,
         )
 
 
+def spawn_workflow() -> Callable[[str, str], Awaitable[str]]:
+    fast = FastAgent("job-eval", parse_cli_args=False)
+
+    @fast.agent(**Evaluator().model_dump(), request_params=Evaluator.request_params())
+    @fast.agent(**EvalSummary().model_dump(), request_params=EvalSummary.request_params())
+    async def workflow(resume: str, job_description: str) -> str:
+        async with fast.run() as agent:
+            evaluation = await agent.eval(Evaluator.prompt(resume, job_description))
+            return remove_json_fences(await agent.eval_summary(evaluation))
+
+    return workflow
+
+
 if __name__ == "__main__":
     import sys
     import argparse
@@ -78,18 +88,11 @@ if __name__ == "__main__":
     cliparser.add_argument("--resume", help="Path of the candidate resume file (default: resume.md)", type=str, default="resume.md")
     args, _ = cliparser.parse_known_args()
 
-    with open(args.resume, "r") as f:
-        resume = f.read()
-    job_description = sys.stdin.read()
-
-    # Create the application
-    fast = FastAgent("job-eval", parse_cli_args=False)
-    # Define generator agent
-    @fast.agent(**Evaluator().model_dump(), request_params=Evaluator.request_params())
-    @fast.agent(**EvalSummary().model_dump(), request_params=EvalSummary.request_params())
     async def main() -> None:
-        async with fast.run() as agent:
-            evaluation = await agent.eval(Evaluator.prompt(resume, job_description))
-            await agent.eval_summary(evaluation)
+        with open(args.resume, "r") as f:
+            resume = f.read()
+        job_description = sys.stdin.read()
+        workflow = spawn_workflow()
+        await workflow(resume, job_description)
 
     asyncio.run(main())
