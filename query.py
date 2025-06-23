@@ -1,12 +1,11 @@
 import json
 import asyncio
+import argparse
 from boss_zhipin import BossZhipin
 from job_eval import spawn_workflow
 
 
 if __name__ == "__main__":
-    import argparse
-
     cliparser = argparse.ArgumentParser(description="查询匹配的职位。")
     cliparser.add_argument("--resume", help="简历文件路径 (目前只支持文本文件，推荐使用Markdown)", type=str, required=True)
     cliparser.add_argument("-q", "--query", help="查询关键字", type=str, default="")

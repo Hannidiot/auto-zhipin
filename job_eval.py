@@ -1,4 +1,3 @@
-import asyncio
 from datetime import date
 from pydantic import BaseModel
 from typing import Callable, Awaitable
@@ -81,6 +80,7 @@ def spawn_workflow() -> Callable[[str, str], Awaitable[str]]:
 
 if __name__ == "__main__":
     import sys
+    import asyncio
     import argparse
 
     cliparser = argparse.ArgumentParser(description="评判岗位是否为优质工作。")

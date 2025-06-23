@@ -61,6 +61,9 @@ class Job:
         desc: str
         url: str
 
+        def description(self) -> str:
+            return f"<name>{self.name}</name>\n<salary>{self.salary}</salary>\n<description>\n{self.desc}\n</description>"
+
     _info: Info
     _jd: Locator
     _favor: Locator
@@ -71,7 +74,7 @@ class Job:
         self._favor = favor
 
     def description(self) -> str:
-        return f"<name>{self._info.name}</name>\n<salary>{self._info.salary}</salary>\n<description>\n{self._info.desc}\n</description>"
+        return self._info.description()
 
     def model_dump(self) -> dict[str, str]:
         return self._info.model_dump()
@@ -79,6 +82,25 @@ class Job:
     async def favor(self) -> None:
         await self._favor.click(delay=random.randint(32, 512))
         await expect(self._jd.get_by_role("link", name="取消收藏")).to_be_visible()
+
+
+class HrDialog:
+    _info: Job.Info
+    _dialog: Locator
+
+    def __init__(self, info: Job.Info, dialog: Locator):
+        self._info = info
+        self._dialog = dialog
+
+    def description(self) -> str:
+        return self._info.description()
+
+    async def send(self, letter: str) -> None:
+        await self._dialog.locator(".input-area").fill(letter)
+        send = self._dialog.locator(".send-message:not(.disable)")
+        await expect(send).to_be_visible()
+        await send.click(delay=random.randint(32, 512))
+        await expect(self._dialog.locator(".send-message.disable")).to_be_visible()
 
 
 class BossZhipin:
@@ -128,3 +150,20 @@ class BossZhipin:
                         desc = await desc.inner_text(),
                         url = await job.get_attribute("href"),
                     ), jd, favor)
+
+    async def apply_jobs(self, jobs: list[dict[str, str]]) -> AsyncGenerator[HrDialog, None]:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=False, args=["--disable-blink-features=AutomationControlled"])
+            context = await browser.new_context()
+            page = await context.new_page()
+            if not await login(context, page, self._cookies_path):
+                return
+            for job in jobs:
+                job_info = Job.Info.model_validate(job)
+                await page.goto(f"{base_url}{job_info.url}", wait_until="networkidle")
+                apply = page.locator(".info-primary").get_by_role("link", name="立即沟通")
+                if await apply.is_visible():
+                    await apply.click(delay=random.randint(32, 512))
+                    dialog = page.locator(".dialog-container")
+                    await expect(dialog).to_be_visible()
+                    yield HrDialog(job_info, dialog)
