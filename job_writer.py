@@ -179,6 +179,7 @@ if __name__ == "__main__":
 
     cliparser = argparse.ArgumentParser(description="针对岗位撰写沟通文案。")
     cliparser.add_argument("--resume", help="简历文件路径 (目前只支持文本文件，推荐使用Markdown)", type=str, required=True)
+    cliparser.add_argument("-O", "--output", help="输出文件路径 (默认: output.md)", type=str, default="output.md")
     args, _ = cliparser.parse_known_args()
 
     async def main() -> None:
@@ -186,6 +187,8 @@ if __name__ == "__main__":
             resume = f.read()
         job_description = sys.stdin.read()
         workflow = spawn_workflow(resume, job_description)
-        await workflow(3)
+        letter = await workflow(3)
+        with open(args.output, "w") as f:
+            print(letter, file=f)
 
     asyncio.run(main())
