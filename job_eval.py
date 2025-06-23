@@ -84,8 +84,8 @@ if __name__ == "__main__":
     import sys
     import argparse
 
-    cliparser = argparse.ArgumentParser(description="Start to evaluate a job description.")
-    cliparser.add_argument("--resume", help="Path of the candidate resume file (default: resume.md)", type=str, default="resume.md")
+    cliparser = argparse.ArgumentParser(description="评判岗位是否为优质工作。")
+    cliparser.add_argument("--resume", help="简历文件路径 (目前只支持文本文件，推荐使用Markdown)", type=str, required=True)
     args, _ = cliparser.parse_known_args()
 
     async def main() -> None:

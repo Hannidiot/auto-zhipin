@@ -1,4 +1,5 @@
 import json
+import random
 from pathlib import Path
 from urllib.parse import urlencode, quote
 from typing import Annotated, AsyncGenerator
@@ -53,15 +54,31 @@ def decode_salary(salary: str) -> str:
     return "".join(salary_mapping[c] if c in salary_mapping else c for c in salary)
 
 
-class JobInfo(BaseModel):
-    name: str
-    salary: str
-    desc: str
-    url: str
-    _favor: Annotated[Locator, Field(exclude=True)]
+class Job:
+    class Info(BaseModel):
+        name: str
+        salary: str
+        desc: str
+        url: str
 
-    async def favor(self):
-        await self._favor.click()
+    _info: Info
+    _jd: Locator
+    _favor: Locator
+
+    def __init__(self, info: Info, jd: Locator, favor: Locator):
+        self._info = info
+        self._jd = jd
+        self._favor = favor
+
+    def description(self) -> str:
+        return f"<name>{self._info.name}</name>\n<salary>{self._info.salary}</salary>\n<description>\n{self._info.desc}\n</description>"
+
+    def model_dump(self) -> dict[str, str]:
+        return self._info.model_dump()
+
+    async def favor(self) -> None:
+        await self._favor.click(delay=random.randint(32, 512))
+        await expect(self._jd.get_by_role("link", name="取消收藏")).to_be_visible()
 
 
 class BossZhipin:
@@ -70,7 +87,7 @@ class BossZhipin:
     def __init__(self, cookies_path: str = "cookies.json"):
         self._cookies_path = Path(cookies_path).resolve()
 
-    async def query_jobs(self, query: str, city: str, scroll_n: int) -> AsyncGenerator[JobInfo, None]:
+    async def query_jobs(self, query: str, city: str, scroll_n: int) -> AsyncGenerator[Job, None]:
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=False, args=["--disable-blink-features=AutomationControlled"])
             context = await browser.new_context()
@@ -97,7 +114,7 @@ class BossZhipin:
                     break
             jobs = await container.locator(".job-name").all()
             for job in jobs:
-                await job.click()
+                await job.click(delay=random.randint(32, 512))
                 jd = page.locator(".job-detail-box")
                 favor = jd.get_by_role("link", name="收藏")
                 name = jd.locator(".job-name")
@@ -105,10 +122,9 @@ class BossZhipin:
                 desc = jd.locator(".desc")
                 await expect(desc).to_be_visible()
                 if await favor.is_visible():
-                    yield JobInfo(
+                    yield Job(Job.Info(
                         name = await name.inner_text(),
                         salary = decode_salary(await salary.inner_text()),
                         desc = await desc.inner_text(),
                         url = await job.get_attribute("href"),
-                        _favor = favor
-                    )
+                    ), jd, favor)
