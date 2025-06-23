@@ -1,6 +1,6 @@
 # auto-zhipin
 
-通过[Playwright](https://github.com/microsoft/playwright-python)自动拉取Boss直聘的岗位信息，并结合求职者的简历进行智能匹配。利用大模型筛选出最契合求职者背景与需求的优质岗位，从而高效提升求职成功率。
+通过[Playwright](https://github.com/microsoft/playwright-python)自动拉取Boss直聘的岗位信息，并结合求职者的简历进行智能筛选。然后根据岗位描述和简历生成个性化的沟通文案，并自动发起与招聘方的沟通。以便求职者更高效地与招聘方建立联系，提升求职效率。
 
 ## 安装
 
@@ -29,7 +29,7 @@ googleoai:
 
 ## 使用
 
-目前暂时只实现了命令行查询工具，用法如下:
+首先通过`query.py`筛选符合要求的职位:
 
 ```bash
 $ uv run query.py --help
@@ -45,7 +45,21 @@ options:
   -n, --scroll_n SCROLL_N
                         最大滚动次数 (默认: 8)
   --ratings RATINGS     可接受的岗位评级 (默认: EXCELLENT,GOOD)
-  -O, --output OUTPUT   输出文件路径 (默认: favor_jobs.json)
+  -O, --output OUTPUT   岗位列表JSON文件输出路径 (默认: favor_jobs.json)
+```
+
+然后通过`apply.py`自动发起沟通:
+
+```bash
+$ uv run apply.py --help
+usage: apply.py [-h] --resume RESUME --jobs JOBS
+
+查询匹配的职位。
+
+options:
+  -h, --help       show this help message and exit
+  --resume RESUME  简历文件路径 (目前只支持文本文件，推荐使用Markdown)
+  --jobs JOBS      收藏岗位列表JSON文件路径
 ```
 
 ## 声明

@@ -12,7 +12,7 @@ if __name__ == "__main__":
     cliparser.add_argument("--city", help="BOSS直聘城市代码 (默认: 100010000)", type=str, default="100010000")
     cliparser.add_argument("-n", "--scroll_n", help="最大滚动次数 (默认: 8)", type=int, default=8)
     cliparser.add_argument("--ratings", help="可接受的岗位评级 (默认: EXCELLENT,GOOD)", type=str, default="EXCELLENT,GOOD")
-    cliparser.add_argument("-O", "--output", help="输出文件路径 (默认: favor_jobs.json)", type=str, default="favor_jobs.json")
+    cliparser.add_argument("-O", "--output", help="岗位列表JSON文件输出路径 (默认: favor_jobs.json)", type=str, default="favor_jobs.json")
     args, _ = cliparser.parse_known_args()
 
     async def main() -> None:
