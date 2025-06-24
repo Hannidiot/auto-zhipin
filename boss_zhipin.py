@@ -109,7 +109,7 @@ class BossZhipin:
     def __init__(self, cookies_path: str = "cookies.json"):
         self._cookies_path = Path(cookies_path).resolve()
 
-    async def query_jobs(self, query: str, city: str, scroll_n: int) -> AsyncGenerator[Job, None]:
+    async def query_jobs(self, query: str, city: str, scroll_n: int, filter_tags: set[str]) -> AsyncGenerator[Job, None]:
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=False, args=["--disable-blink-features=AutomationControlled"])
             context = await browser.new_context()
@@ -134,8 +134,12 @@ class BossZhipin:
                         break
                 except AssertionError:
                     break
-            jobs = await container.locator(".job-name").all()
+            jobs = await container.locator(".job-card-box").all()
             for job in jobs:
+                tag = job.locator(".job-tag-icon")
+                if await tag.is_visible():
+                    if await tag.get_attribute("alt") in filter_tags:
+                        continue
                 await job.click(delay=random.randint(32, 512))
                 jd = page.locator(".job-detail-box")
                 favor = jd.get_by_role("link", name="收藏")
@@ -148,7 +152,7 @@ class BossZhipin:
                         name = await name.inner_text(),
                         salary = decode_salary(await salary.inner_text()),
                         desc = await desc.inner_text(),
-                        url = await job.get_attribute("href"),
+                        url = await job.locator(".job-name").get_attribute("href"),
                     ), jd, favor)
 
     async def apply_jobs(self, jobs: list[dict[str, str]]) -> AsyncGenerator[HrDialog, None]:

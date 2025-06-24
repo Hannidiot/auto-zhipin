@@ -33,9 +33,9 @@ googleoai:
 
 ```bash
 $ uv run query.py --help
-usage: query.py [-h] --resume RESUME [-q QUERY] [--city CITY] [-n SCROLL_N] [--ratings RATINGS] [-O OUTPUT]
+usage: query.py [-h] --resume RESUME [-q QUERY] [--city CITY] [-n SCROLL_N] [--filter_tags FILTER_TAGS] [--ratings RATINGS] [-O OUTPUT]
 
-查询匹配的职位。
+查询匹配的岗位。
 
 options:
   -h, --help            show this help message and exit
@@ -44,6 +44,8 @@ options:
   --city CITY           BOSS直聘城市代码 (默认: 100010000)
   -n, --scroll_n SCROLL_N
                         最大滚动次数 (默认: 8)
+  --filter_tags FILTER_TAGS
+                        需要过滤的岗位标签 (默认: 派遣,猎头)
   --ratings RATINGS     可接受的岗位评级 (默认: EXCELLENT,GOOD)
   -O, --output OUTPUT   岗位列表JSON文件输出路径 (默认: favor_jobs.json)
 ```
