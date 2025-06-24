@@ -56,13 +56,14 @@ def decode_salary(salary: str) -> str:
 
 class Job:
     class Info(BaseModel):
-        name: str
+        company: str
+        title: str
         salary: str
         desc: str
         url: str
 
         def description(self) -> str:
-            return f"<name>{self.name}</name>\n<salary>{self.salary}</salary>\n<description>\n{self.desc}\n</description>"
+            return f"<company>{self.company}</company>\n<title>{self.title}</title>\n<salary>{self.salary}</salary>\n<description>\n{self.desc}\n</description>"
 
     _info: Info
     _jd: Locator
@@ -140,16 +141,18 @@ class BossZhipin:
                 if await tag.is_visible():
                     if await tag.get_attribute("alt") in filter_tags:
                         continue
+                company = job.locator(".boss-name")
                 await job.click(delay=random.randint(32, 512))
                 jd = page.locator(".job-detail-box")
                 favor = jd.get_by_role("link", name="收藏")
-                name = jd.locator(".job-name")
+                title = jd.locator(".job-name")
                 salary = jd.locator(".job-salary")
                 desc = jd.locator(".desc")
                 await expect(desc).to_be_visible()
                 if await favor.is_visible():
                     yield Job(Job.Info(
-                        name = await name.inner_text(),
+                        company = await company.inner_text(),
+                        title = await title.inner_text(),
                         salary = decode_salary(await salary.inner_text()),
                         desc = await desc.inner_text(),
                         url = await job.locator(".job-name").get_attribute("href"),
