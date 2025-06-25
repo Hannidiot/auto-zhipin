@@ -84,6 +84,7 @@ class Job:
     async def favor(self) -> None:
         await self._favor.click(delay=random.randint(32, 512))
         await expect(self._jd.get_by_role("link", name="取消收藏")).to_be_visible()
+        await self._jd.page.wait_for_timeout(random.randint(1024, 2048))
 
 
 class HrDialog:
