@@ -100,6 +100,7 @@ class HrDialog:
         await self._dialog.locator(".input-area").fill(letter)
         send = self._dialog.locator(".send-message:not(.disable)")
         await expect(send).to_be_visible()
+        await self._dialog.page.wait_for_timeout(random.randint(128, 8192))
         await send.click(delay=random.randint(32, 512))
         await expect(self._dialog.locator(".send-message.disable")).to_be_visible()
 
