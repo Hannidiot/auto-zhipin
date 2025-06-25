@@ -168,7 +168,9 @@ class BossZhipin:
             for job in jobs:
                 job_info = Job.Info.model_validate(job)
                 await page.goto(f"{base_url}{job_info.url}", wait_until="networkidle")
-                apply = page.locator(".info-primary").get_by_role("link", name="立即沟通")
+                primary = page.locator(".info-primary")
+                await expect(primary).to_be_visible()
+                apply = primary.get_by_role("link", name="立即沟通")
                 if await apply.is_visible():
                     await apply.click(delay=random.randint(32, 512))
                     dialog = page.locator(".dialog-container")
