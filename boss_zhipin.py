@@ -1,3 +1,4 @@
+import re
 import json
 import random
 from pathlib import Path
@@ -139,9 +140,8 @@ class BossZhipin:
             jobs = await container.locator(".job-card-box").all()
             for job in jobs:
                 tag = job.locator(".job-tag-icon")
-                if await tag.is_visible():
-                    if await tag.get_attribute("alt") in filter_tags:
-                        continue
+                if await tag.is_visible() and await tag.get_attribute("alt") in filter_tags:
+                    continue
                 company = job.locator(".boss-name")
                 await job.click(delay=random.randint(32, 512))
                 jd = page.locator(".job-detail-box")
@@ -149,7 +149,12 @@ class BossZhipin:
                 title = jd.locator(".job-name")
                 salary = jd.locator(".job-salary")
                 desc = jd.locator(".desc")
+                boss = jd.locator(".job-boss-info")
                 await expect(desc).to_be_visible()
+                await expect(boss).to_be_visible()
+                active = boss.locator(".boss-active-time")
+                if await active.is_visible() and re.search(r"[周月年]", await active.inner_text()):
+                    continue
                 if await favor.is_visible():
                     yield Job(Job.Info(
                         company = await company.inner_text(),
