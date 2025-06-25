@@ -83,7 +83,7 @@ class Job:
 
     async def favor(self) -> None:
         await self._favor.click(delay=random.randint(32, 512))
-        await expect(self._jd.get_by_role("link", name="取消收藏")).to_be_visible()
+        await expect(self._jd.locator(".op-btn.op-btn-like.active")).to_be_visible()
         await self._jd.page.wait_for_timeout(random.randint(1024, 2048))
 
 
@@ -146,7 +146,7 @@ class BossZhipin:
                 company = job.locator(".boss-name")
                 await job.click(delay=random.randint(32, 512))
                 jd = page.locator(".job-detail-box")
-                favor = jd.get_by_role("link", name="收藏")
+                favor = jd.locator(".op-btn.op-btn-like:not(.active)")
                 title = jd.locator(".job-name")
                 salary = jd.locator(".job-salary")
                 desc = jd.locator(".desc")
