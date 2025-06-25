@@ -113,7 +113,7 @@ class BossZhipin:
     def __init__(self, cookies_path: str = "cookies.json"):
         self._cookies_path = Path(cookies_path).resolve()
 
-    async def query_jobs(self, query: str, city: str, scroll_n: int, filter_tags: set[str]) -> AsyncGenerator[Job, None]:
+    async def query_jobs(self, query: str, city: str, scroll_n: int, filter_tags: set[str], blacklist: set[str] | None = None) -> AsyncGenerator[Job, None]:
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=False, args=["--disable-blink-features=AutomationControlled"])
             context = await browser.new_context()
@@ -157,13 +157,15 @@ class BossZhipin:
                 if await active.is_visible() and re.search(r"[周月年]", await active.inner_text()):
                     continue
                 if await favor.is_visible():
-                    yield Job(Job.Info(
-                        company = await company.inner_text(),
-                        title = await title.inner_text(),
-                        salary = decode_salary(await salary.inner_text()),
-                        desc = await desc.inner_text(),
-                        url = await job.locator(".job-name").get_attribute("href"),
-                    ), jd, favor)
+                    company_name = await company.inner_text()
+                    if not blacklist or company_name not in blacklist:
+                        yield Job(Job.Info(
+                            company = company_name,
+                            title = await title.inner_text(),
+                            salary = decode_salary(await salary.inner_text()),
+                            desc = await desc.inner_text(),
+                            url = await job.locator(".job-name").get_attribute("href"),
+                        ), jd, favor)
 
     async def apply_jobs(self, jobs: list[dict[str, str]]) -> AsyncGenerator[HrDialog, None]:
         async with async_playwright() as p:

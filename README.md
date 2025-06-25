@@ -33,7 +33,7 @@ googleoai:
 
 ```bash
 $ uv run query.py --help
-usage: query.py [-h] --resume RESUME [-q QUERY] [--city CITY] [-n SCROLL_N] [--filter_tags FILTER_TAGS] [--ratings RATINGS] [-O OUTPUT]
+usage: query.py [-h] --resume RESUME [-q QUERY] [--city CITY] [-n SCROLL_N] [--filter_tags FILTER_TAGS] [--ratings RATINGS] [--blacklist BLACKLIST] [-O OUTPUT]
 
 查询匹配的岗位。
 
@@ -47,6 +47,8 @@ options:
   --filter_tags FILTER_TAGS
                         需要过滤的岗位标签 (默认: 派遣,猎头)
   --ratings RATINGS     可接受的岗位评级 (默认: EXCELLENT,GOOD)
+  --blacklist BLACKLIST
+                        公司黑名单文件路径 (每行一个公司名称)
   -O, --output OUTPUT   岗位列表JSON文件输出路径 (默认: favor_jobs.json)
 ```
 
