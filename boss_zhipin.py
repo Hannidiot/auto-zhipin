@@ -113,14 +113,17 @@ class BossZhipin:
     def __init__(self, cookies_path: str = "cookies.json"):
         self._cookies_path = Path(cookies_path).resolve()
 
-    async def query_jobs(self, query: str, city: str, scroll_n: int, filter_tags: set[str], blacklist: set[str] | None = None) -> AsyncGenerator[Job, None]:
+    async def query_jobs(self, query: str, city: str, salary: str | None = None, scroll_n: int = 8, filter_tags: set[str] | None = None, blacklist: set[str] | None = None) -> AsyncGenerator[Job, None]:
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=False, args=["--disable-blink-features=AutomationControlled"])
             context = await browser.new_context()
             page = await context.new_page()
             if not await login(context, page, self._cookies_path):
                 return
-            await page.goto(f"{base_url}/web/geek/jobs?{urlencode(dict(query=query, city=city), quote_via=quote)}")
+            params = dict(query=query, city=city)
+            if salary:
+                params["salary"] = salary
+            await page.goto(f"{base_url}/web/geek/jobs?{urlencode(params, quote_via=quote)}")
             prev_h = 0
             container = page.locator(".job-list-container")
             await expect(container).to_be_visible()
@@ -140,9 +143,10 @@ class BossZhipin:
                     break
             jobs = await container.locator(".job-card-box").all()
             for job in jobs:
-                tag = job.locator(".job-tag-icon")
-                if await tag.is_visible() and await tag.get_attribute("alt") in filter_tags:
-                    continue
+                if filter_tags:
+                    tag = job.locator(".job-tag-icon")
+                    if await tag.is_visible() and await tag.get_attribute("alt") in filter_tags:
+                        continue
                 company = job.locator(".boss-name")
                 await job.click(delay=random.randint(32, 512))
                 jd = page.locator(".job-detail-box")
