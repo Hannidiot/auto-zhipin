@@ -33,7 +33,7 @@ googleoai:
 
 ```bash
 $ uv run query.py --help
-usage: query.py [-h] --resume RESUME [-q QUERY] [--city CITY] [-n SCROLL_N] [--filter_tags FILTER_TAGS] [--ratings RATINGS] [--blacklist BLACKLIST] [-O OUTPUT]
+usage: query.py [-h] --resume RESUME [-q QUERY] [--city CITY] [--salary SALARY] [-n SCROLL_N] [--filter_tags FILTER_TAGS] [--ratings RATINGS] [--blacklist BLACKLIST] [-O OUTPUT]
 
 查询匹配的岗位。
 
@@ -42,6 +42,7 @@ options:
   --resume RESUME       简历文件路径 (目前只支持文本文件，推荐使用Markdown)
   -q, --query QUERY     查询关键字
   --city CITY           BOSS直聘城市代码 (默认: 100010000)
+  --salary SALARY       BOSS直聘薪资代码
   -n, --scroll_n SCROLL_N
                         最大滚动次数 (默认: 8)
   --filter_tags FILTER_TAGS
@@ -51,6 +52,9 @@ options:
                         公司黑名单文件路径 (每行一个公司名称)
   -O, --output OUTPUT   岗位列表JSON文件输出路径 (默认: favor_jobs.json)
 ```
+
+> [!NOTE]
+> BOSS直聘城市代码及薪资代码可自行使用浏览器登录并选择相关查询条件后在地址栏通过URL参数查看。例如地区选择`全国`薪资待遇选择`5-10K`，则可在地址栏看到URL`https://www.zhipin.com/web/geek/jobs?city=100010000&salary=404`，通过URL参数`city`和`salary`可知城市代码为`100010000`薪资代码为`404`。
 
 然后通过`apply.py`自动发起沟通:
 
