@@ -23,7 +23,7 @@ uv run playwright install
 ```
 # fastagent.secrets.yaml
 
-googleoai:
+google:
   api_key: "$YOUR_GEMINI_API_KEY"
 ```
 
