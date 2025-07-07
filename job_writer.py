@@ -8,7 +8,7 @@ from utils import remove_json_fences
 
 class Writer(BaseModel):
     name: str = "writer"
-    model: str = "googleoai.gemini-2.5-flash"
+    model: str = "google.gemini-2.5-flash"
     instruction: str
 
     def __init__(self, resume: str, job_description: str) -> None:
