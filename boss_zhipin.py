@@ -2,6 +2,7 @@ import re
 import json
 import random
 from pathlib import Path
+from typing import Callable
 from urllib.parse import urlencode, quote
 from typing import AsyncGenerator
 from playwright.async_api import BrowserContext, Page, Locator, async_playwright, expect
@@ -36,7 +37,7 @@ async def dump_cookies(context: BrowserContext, cookies_path: Path) -> None:
         json.dump({"cookies": cookies}, f)
 
 
-async def login(context: BrowserContext, page: Page, cookies_path: Path) -> bool:
+async def login(context: BrowserContext, page: Page, cookies_path: Path, headless_cb: Callable[[str], None] | None = None) -> bool:
     await load_cookies(context, cookies_path)
     await page.goto(f"{base_url}/web/user/?ka=header-login", wait_until="networkidle")
     figure = page.locator(".nav-figure")
@@ -45,6 +46,13 @@ async def login(context: BrowserContext, page: Page, cookies_path: Path) -> bool
             await dump_cookies(context, cookies_path)
             return True
         try:
+            if headless_cb:
+                wx_btn = page.locator(".wx-login-btn")
+                if await wx_btn.is_visible():
+                    await wx_btn.click(delay=random.randint(32, 512))
+                    qrcode = page.locator(".mini-qrcode")
+                    await expect(qrcode).to_be_visible()
+                    headless_cb(await qrcode.get_attribute("src"))
             await expect(figure).to_be_visible(timeout=1000)
         except AssertionError:
             pass
@@ -110,15 +118,19 @@ class HrDialog:
 class BossZhipin:
     _cookies_path: Path
 
-    def __init__(self, cookies_path: str = "cookies.json"):
+    def __init__(self, cookies_path: str = "cookies.json", headless_cb: Callable[[str], None] | None = None):
         self._cookies_path = Path(cookies_path).resolve()
+        self._headless_cb = headless_cb
 
     async def query_jobs(self, query: str, city: str, salary: str | None = None, scroll_n: int = 8, filter_tags: set[str] | None = None, blacklist: set[str] | None = None) -> AsyncGenerator[Job, None]:
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=False, args=["--disable-blink-features=AutomationControlled"])
+            browser = await p.chromium.launch(
+                headless = True if self._headless_cb else False,
+                args = ["--disable-blink-features=AutomationControlled"]
+            )
             context = await browser.new_context()
             page = await context.new_page()
-            if not await login(context, page, self._cookies_path):
+            if not await login(context, page, self._cookies_path, self._headless_cb):
                 return
             params = dict(query=query, city=city)
             if salary:
@@ -173,10 +185,13 @@ class BossZhipin:
 
     async def apply_jobs(self, jobs: list[dict[str, str]]) -> AsyncGenerator[HrDialog, None]:
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=False, args=["--disable-blink-features=AutomationControlled"])
+            browser = await p.chromium.launch(
+                headless = True if self._headless_cb else False,
+                args = ["--disable-blink-features=AutomationControlled"]
+            )
             context = await browser.new_context()
             page = await context.new_page()
-            if not await login(context, page, self._cookies_path):
+            if not await login(context, page, self._cookies_path, self._headless_cb):
                 return
             for job in jobs:
                 job_info = Job.Info.model_validate(job)
