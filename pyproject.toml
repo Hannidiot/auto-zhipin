@@ -5,6 +5,6 @@ description = "通过Playwright自动拉取Boss直聘的岗位信息，并结合
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "fast-agent-mcp>=0.2.38",
-    "playwright>=1.53.0",
+    "fast-agent-mcp>=0.2.46",
+    "playwright>=1.54.0",
 ]
