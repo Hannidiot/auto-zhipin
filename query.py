@@ -7,7 +7,7 @@ from job_eval import spawn_workflow
 
 if __name__ == "__main__":
     cliparser = argparse.ArgumentParser(description="查询匹配的岗位。")
-    cliparser.add_argument("--resume", help="简历文件路径 (目前只支持文本文件，推荐使用Markdown)", type=str, required=True)
+    # cliparser.add_argument("--resume", help="简历文件路径 (目前只支持文本文件，推荐使用Markdown)", type=str, required=True)
     cliparser.add_argument("-q", "--query", help="查询关键字", type=str, default="")
     cliparser.add_argument("--city", help="BOSS直聘城市代码 (默认: 100010000)", type=str, default="100010000")
     cliparser.add_argument("--salary", help="BOSS直聘薪资代码", type=str)
@@ -21,8 +21,8 @@ if __name__ == "__main__":
     async def main() -> None:
         filter_tags = set(t.strip() for t in args.filter_tags.split(","))
         ratings = set(r.strip() for r in args.ratings.split(","))
-        with open(args.resume, "r") as f:
-            resume = f.read()
+        # with open(args.resume, "r") as f:
+        #     resume = f.read()
         if args.blacklist:
             with open(args.blacklist, "r") as f:
                 blacklist = set(company.strip() for company in f.readlines())
@@ -38,13 +38,14 @@ if __name__ == "__main__":
             filter_tags = filter_tags,
             blacklist = blacklist
         ):
-            workflow = spawn_workflow()
-            result = json.loads(await workflow(resume, job.description()))
-            if result["rating"] in ratings:
-                await job.favor()
-                favor_jobs.append(job.model_dump())
+            # workflow = spawn_workflow()
+            # result = json.loads(await workflow(resume, job.description()))
+            # if result["rating"] in ratings:
+            #     await job.favor()
+            #     favor_jobs.append(job.model_dump())
+            favor_jobs.append(job.model_dump())
         if len(favor_jobs) > 0:
-            with open(args.output, "w") as f:
-                json.dump(favor_jobs, f)
+            with open(args.output, "w", encoding='utf-8') as f:
+                json.dump(favor_jobs, f, ensure_ascii=False, indent=4)
 
     asyncio.run(main())
